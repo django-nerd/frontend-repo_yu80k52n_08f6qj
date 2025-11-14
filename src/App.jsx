@@ -28,15 +28,20 @@ function WindowReveal() {
 }
 
 function DawnScene() {
-  const { scrollYProgress } = useScroll({
-    layoutEffect: false,
-  })
+  const { scrollYProgress } = useScroll()
 
   const smoothProgress = useSpring(scrollYProgress, { stiffness: 100, damping: 30, mass: 0.2 })
 
   // Sky transitions from deep night to dawn orange
   const skyFrom = useTransform(smoothProgress, [0, 0.5, 1], ['#0b1020', '#243b55', '#f59e0b'])
   const skyTo = useTransform(smoothProgress, [0, 0.5, 1], ['#111827', '#1f2937', '#fde68a'])
+
+  // Use CSS variables for gradient that react to MotionValues
+  const gradientStyle = {
+    '--c1': skyFrom,
+    '--c2': skyTo,
+    background: 'linear-gradient(to bottom, var(--c1), var(--c2))',
+  }
 
   // Sun position and opacity
   const sunY = useTransform(smoothProgress, [0, 1], [250, -80])
@@ -63,19 +68,21 @@ function DawnScene() {
   const fieldY = useTransform(smoothProgress, [0, 1], [0, -20])
 
   useEffect(() => {
-    // no-op, keep component reactive
+    // Keep component reactive
   }, [])
 
   return (
     <section className="relative h-[140vh] overflow-hidden">
       {/* Sky gradient */}
-      <motion.div
-        className="absolute inset-0"
-        style={{ background: skyFrom.to((c1) => `linear-gradient(to bottom, ${c1}, ${skyTo.get()})`) }}
-      />
+      <motion.div className="absolute inset-0" style={gradientStyle} />
 
       {/* Stars (fade out with dawn) */}
-      <motion.svg className="absolute inset-0 w-full h-full" viewBox="0 0 1200 800" preserveAspectRatio="none" style={{ opacity: useTransform(smoothProgress, [0, 0.4], [0.6, 0]) }}>
+      <motion.svg
+        className="absolute inset-0 w-full h-full"
+        viewBox="0 0 1200 800"
+        preserveAspectRatio="none"
+        style={{ opacity: useTransform(smoothProgress, [0, 0.4], [0.6, 0]) }}
+      >
         {[...Array(60)].map((_, i) => {
           const x = (i * 97) % 1200
           const y = (i * 181) % 400
